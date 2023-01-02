@@ -31,12 +31,20 @@ tidy:
 ## pre-commit: Chain lint + test
 pre-commit: test lint
 
+## proto: Protobuf buildchain
+proto:
+	rm -f **/*.pb.go
+	protoc --proto_path=proto proto/*.proto --go_out=. --fatal_warnings
+
 ## test: Test with go test
 test:
-	go test -race -covermode=atomic -coverprofile=coverage.out ./... && go tool cover -html=coverage.out && rm coverage.out
+	go test -race -covermode=atomic -coverprofile=coverage.out ./...
+	go tool cover -func=coverage.out
+	go tool cover -html=coverage.out
+	rm coverage.out
 
 ## test-perf: Benchmark tests with go test -bench
 test-perf:
 	go test -benchmem -bench=. -coverprofile=coverage-bench.out ./... && go tool cover -html=coverage-bench.out && rm coverage-bench.out
 
-.PHONY: lint fmt tidy pre-commit test test-perf
+.PHONY: lint fmt tidy pre-commit proto test test-perf

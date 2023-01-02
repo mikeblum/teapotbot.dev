@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+package teapotbot;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/descriptor.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "api/internal/ping";
+
+// ALPN protocols per [MDN Docs]
+// [MDN Docs]: https://developer.mozilla.org/en-US/docs/Glossary/ALPN
+enum Protocol {
+    HTTP1 = 0; // default to http/1.1
+    HTTP2 = 1; // http/2
+}
+
+// See [HAProxy L4 vs L7]
+// [HAProxy L4 vs L7]: https://www.haproxy.com/blog/layer-4-and-layer-7-proxy-mode/
+enum Scheme {  
+  TCP = 0;  // default to TCP - Layer 4
+  HTTP = 1; // Layer 7
+  HTTPS = 2;
+}
+
+// See [IANA HTTP Methods]
+// Unsafe methods such as CONNECT, DELETE, PATCH, POST, and PUT are omitted
+// [IANA HTTP Methods]: https://www.iana.org/assignments/http-methods/http-methods.xhtml
+enum Method {
+  GET = 0;      // default to GET - safe: yes; idempotent: yes; reference: [RFC9110, Section 9.3.1]
+  HEAD = 1;     // safe: yes; idempotent: yes; reference: [RFC9110, Section 9.3.2]
+  OPTIONS = 2;  // safe: yes; idempotent: yes; reference: [RFC9110, Section 9.3.7]
+  TRACE = 4;    // safe: yes; idempotent: yes; reference: [RFC9110, Section 9.3.8]
+}
+
+// [scheme:][//[userinfo@]host][/]path[?query] as defined in [net/url]
+// fragments are omitted per [url#ParseRequestURI]
+//
+// [net/url]: https://pkg.go.dev/net/url#URL
+// [url#ParseRequestURI]: https://pkg.go.dev/net/url#ParseRequestURI
+message Url {
+  // tcp or http or https
+  Scheme scheme = 1;
+  // host or host:port; 
+  // [IANA Port Numbers]: https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml
+  string host = 2;
+  optional string path = 3;
+  optional string query = 4;
+}
+
+message PingRequest {
+  google.protobuf.FileDescriptorSet descriptor_set = 1;
+
+  Protocol protocol = 2;
+  Method method = 3;
+  Url url = 4;
+
+  // [net/http Header]: https://pkg.go.dev/net/http#Header
+  repeated google.protobuf.Struct headers = 5;
+
+  // UTC timestamp in ISO-8601 formatted as time.RFC3339
+  // example:
+  // `fmt.Println(time.Now().Format(time.RFC3339))`
+  google.protobuf.Timestamp created = 6;
+  // Cancel request if timeout (in seconds or nanoseconds) is exceeded
+  optional google.protobuf.Duration timeout = 7;
+}
+
+message PingResponse {
+  google.protobuf.FileDescriptorSet descriptor_set = 1;
+
+  // HTTP status code per [net/http status.go]
+  // [net/http status.go]:  https://go.dev/src/net/http/status.go
+  int32 status_code = 4;
+ 
+  // HTTP status text per [net/http status.go]
+  // [net/http status.go]:  https://go.dev/src/net/http/status.go
+  string status_text = 5;
+
+  oneof data {
+    // net/http.Response Body payload
+    // `body, err := ioutil.ReadAll(resp.Body)`
+    google.protobuf.Any plain = 6;
+
+    // JSON-style structured metadata
+    google.protobuf.Struct json = 7;
+  }
+  // UTC timestamp in ISO-8601 formatted as time.RFC3339
+  // updated will be nil until the request is serviced
+  optional google.protobuf.Timestamp updated = 8;
+  // if PingRequest.timeout is exceeded note the wall clock time
+  optional google.protobuf.Timestamp cancelled = 9;
+  google.protobuf.Duration timeout = 10;
+}
