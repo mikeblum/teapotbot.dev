@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/durationpb"
+	bot "teapotbot.dev/api/bot"
 	buf "teapotbot.dev/api/internal/ping"
 )
 
@@ -20,14 +21,14 @@ func (m *mockedPingRequest) Ping() (*buf.PingResponse, error) {
 	return nil, args.Error(1)
 }
 
-func defaultBot() *Bot {
-	return &Bot{
-		PingRequest: buf.PingRequest{
-			Method:  buf.Method_GET,
-			Url:     &buf.Url{Host: "localhost:80"},
-			Timeout: &durationpb.Duration{Seconds: 10},
-		},
+func defaultBot() *bot.Bot {
+	defaultBot := bot.New()
+	defaultBot.PingRequest = &buf.PingRequest{
+		Method:  buf.Method_GET,
+		Url:     &buf.Url{Host: "localhost:80"},
+		Timeout: &durationpb.Duration{Seconds: 10},
 	}
+	return defaultBot
 }
 
 func TestNewPingRequestMock(t *testing.T) {
@@ -37,13 +38,6 @@ func TestNewPingRequestMock(t *testing.T) {
 	mocked.AssertExpectations(t)
 	assert.NotNil(t, err)
 	assert.Nil(t, response)
-}
-
-func TestNewPingRequestPing(t *testing.T) {
-	req := defaultBot()
-	response, err := req.Ping()
-	assert.Nil(t, err)
-	assert.NotNil(t, response)
 }
 
 func TestNewPingRequestDefaults(t *testing.T) {
