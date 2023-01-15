@@ -5,11 +5,20 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptrace"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	MaxIdleConns        = 100
+	MaxConnsPerHost     = 100
+	MaxIdleConnsPerHost = 100
+	TimeoutSeconds      = 30
+)
+
 type Transport struct {
+	http.Transport
 	ctx  *http.Request
 	host string
 	log  *logrus.Entry
@@ -18,9 +27,13 @@ type Transport struct {
 func New() *Transport {
 	log := logrus.New().WithFields(logrus.Fields{})
 	log.Logger.SetLevel(logrus.DebugLevel)
-	return &Transport{
+	t := &Transport{
 		log: log,
 	}
+	t.MaxIdleConns = MaxIdleConns
+	t.MaxConnsPerHost = MaxConnsPerHost
+	t.MaxIdleConnsPerHost = MaxIdleConnsPerHost
+	return t
 }
 
 func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
@@ -38,6 +51,13 @@ func (t *Transport) Trace() *httptrace.ClientTrace {
 		TLSHandshakeDone:  t.TLSHandshakeDone,
 		GetConn:           t.GetConn,
 		GotConn:           t.GotConn,
+	}
+}
+
+func (t *Transport) Client() *http.Client {
+	return &http.Client{
+		Timeout:   TimeoutSeconds * time.Second,
+		Transport: t,
 	}
 }
 
@@ -127,7 +147,7 @@ func (t *Transport) Do() *Transport {
 	req, _ := http.NewRequest("GET", "https://google.com", nil)
 	req = req.WithContext(httptrace.WithClientTrace(req.Context(), t.Trace()))
 
-	client := &http.Client{Transport: t}
+	client := t.Client()
 	if _, err := client.Do(req); err != nil {
 		log.Printf("failed to crawl request: %v", err)
 	}
