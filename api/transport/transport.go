@@ -24,7 +24,7 @@ type Transport struct {
 	log  *logrus.Entry
 }
 
-func New() *Transport {
+func NewTransport() *Transport {
 	log := logrus.New().WithFields(logrus.Fields{})
 	log.Logger.SetLevel(logrus.DebugLevel)
 	t := &Transport{
