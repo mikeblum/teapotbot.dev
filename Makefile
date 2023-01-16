@@ -1,4 +1,4 @@
-## golang-project-template build tooling
+## teapotbot.dev build tooling
 
 MAKEFLAGS += --silent
 

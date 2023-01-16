@@ -55,7 +55,7 @@ func TestNewPingRequestProto(t *testing.T) {
 		dat, err := proto.Marshal(req)
 		assert.Nil(t, err)
 		expected := &buf.PingRequest{}
-		err = proto.Unmarshal(dat, expected.ProtoReflect().Interface())
+		err = proto.Unmarshal(dat, expected)
 		assert.Nil(t, err)
 	})
 }

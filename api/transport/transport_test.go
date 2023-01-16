@@ -102,10 +102,10 @@ func setupSuite(t *testing.T) (*TCPTestSuite, func(t *testing.T, suite *TCPTestS
 	go suite.serve(protocolV4, suite.ipv4)
 	go suite.serve(protocolV6, suite.ipv6)
 
-	return suite, tearDownSuite
+	return suite, teardownSuite
 }
 
-func tearDownSuite(t *testing.T, suite *TCPTestSuite) {
+func teardownSuite(t *testing.T, suite *TCPTestSuite) {
 	log.Print("tearing down tcp test servers")
 	var err error
 	err = suite.ipv4.Close()
@@ -126,11 +126,11 @@ func TestPing(t *testing.T) {
 	// <setup code>
 	suite, teardown := setupSuite(t)
 	defer teardown(t, suite)
-	t.Run("IPV=4", suite.TestPingIpv4)
-	t.Run("IPV=6", suite.TestPingIpv6)
+	t.Run("IPV=4", suite.PingIpv4Test)
+	t.Run("IPV=6", suite.PingIpv6Test)
 }
 
-func (s *TCPTestSuite) TestPingIpv4(t *testing.T) {
+func (s *TCPTestSuite) PingIpv4Test(t *testing.T) {
 	resp, err := s.client.Get(createTestURL(s.ipv4).String())
 	assert.Nil(t, err)
 	defer resp.Body.Close()
@@ -140,7 +140,7 @@ func (s *TCPTestSuite) TestPingIpv4(t *testing.T) {
 	assert.Equal(t, responsePong, string(body))
 }
 
-func (s *TCPTestSuite) TestPingIpv6(t *testing.T) {
+func (s *TCPTestSuite) PingIpv6Test(t *testing.T) {
 	resp, err := s.client.Get(createTestURL(s.ipv6).String())
 	assert.Nil(t, err)
 	defer resp.Body.Close()

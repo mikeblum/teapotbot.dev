@@ -148,8 +148,10 @@ func (t *Transport) Do() *Transport {
 	req = req.WithContext(httptrace.WithClientTrace(req.Context(), t.Trace()))
 
 	client := t.Client()
-	if _, err := client.Do(req); err != nil {
+	if res, err := client.Do(req); err != nil {
 		log.Printf("failed to crawl request: %v", err)
+	} else {
+		defer res.Body.Close()
 	}
 	return t
 }
