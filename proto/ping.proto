@@ -19,7 +19,7 @@ enum Protocol {
 
 // See [HAProxy L4 vs L7]
 // [HAProxy L4 vs L7]: https://www.haproxy.com/blog/layer-4-and-layer-7-proxy-mode/
-enum Scheme {  
+enum Scheme {
   TCP = 0;  // default to TCP - Layer 4
   HTTP = 1; // Layer 7
   HTTPS = 2;
@@ -43,7 +43,7 @@ enum Method {
 message Url {
   // tcp or http or https
   Scheme scheme = 1;
-  // host or host:port; 
+  // host or host:port;
   // [IANA Port Numbers]: https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml
   string host = 2;
   optional string path = 3;
@@ -74,7 +74,7 @@ message PingResponse {
   // HTTP status code per [net/http status.go]
   // [net/http status.go]:  https://go.dev/src/net/http/status.go
   int32 status_code = 4;
- 
+
   // HTTP status text per [net/http status.go]
   // [net/http status.go]:  https://go.dev/src/net/http/status.go
   string status_text = 5;

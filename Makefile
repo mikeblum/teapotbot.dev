@@ -20,6 +20,9 @@ help:
 lint:
 	docker run --rm -v $$(pwd):/repo -w /repo golangci/golangci-lint:${GOLANGCI_LINT_VERSION} golangci-lint run --verbose --color always ./...
 
+pre-commit:
+	pre-commit run --all-files --show-diff-on-failure
+
 ## fmt: Format with gofmt
 fmt:
 	go fmt ./...
