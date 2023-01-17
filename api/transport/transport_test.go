@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	buf "teapotbot.dev/api/internal/ping"
+	"teapotbot.dev/conftest"
 )
 
 const (
@@ -80,9 +81,11 @@ func ping(rw http.ResponseWriter, r *http.Request) {
 // Setup
 
 func setupSuite(t *testing.T) (*TCPTestSuite, func(t *testing.T, suite *TCPTestSuite)) {
+	_, err := conftest.SetupConf()
+	assert.Nil(t, err)
 	log.Print("spinning up tcp test servers")
 	suite := &TCPTestSuite{
-		client: NewTransport().Client(),
+		client: NewTransport(conftest.MockConfFile).Client(),
 	}
 	srv := &http.Server{
 		ReadTimeout:       1 * time.Second,
@@ -106,6 +109,7 @@ func setupSuite(t *testing.T) (*TCPTestSuite, func(t *testing.T, suite *TCPTestS
 }
 
 func teardownSuite(t *testing.T, suite *TCPTestSuite) {
+	conftest.CleanupConf(t)
 	log.Print("tearing down tcp test servers")
 	var err error
 	err = suite.ipv4.Close()
@@ -116,18 +120,19 @@ func teardownSuite(t *testing.T, suite *TCPTestSuite) {
 
 // Tests
 
-func TestTransportDo(t *testing.T) {
-	transport := NewTransport()
-	ctx := transport.Do()
-	assert.NotNil(t, ctx)
-}
-
-func TestPing(t *testing.T) {
+func TestTransport(t *testing.T) {
 	// <setup code>
 	suite, teardown := setupSuite(t)
 	defer teardown(t, suite)
+	t.Run("transport=do", TransportDoTest)
 	t.Run("IPV=4", suite.PingIpv4Test)
 	t.Run("IPV=6", suite.PingIpv6Test)
+}
+
+func TransportDoTest(t *testing.T) {
+	transport := NewTransport(conftest.MockConfFile)
+	ctx := transport.Do()
+	assert.NotNil(t, ctx)
 }
 
 func (s *TCPTestSuite) PingIpv4Test(t *testing.T) {

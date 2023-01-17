@@ -7,6 +7,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"teapotbot.dev/conftest"
 )
 
 func TestLog(t *testing.T) {
@@ -20,13 +21,13 @@ func TestLog(t *testing.T) {
 }
 
 func LogStdoutTest(t *testing.T) {
-	log := NewLog(mockConfFile)
+	log := NewLog(conftest.MockConfFile)
 	assert.NotNil(t, log)
 	assert.Equal(t, os.Stdout, log.Logger.Out)
 }
 
 func LogLevelInfoTest(t *testing.T) {
-	log := NewLog(mockConfFile)
+	log := NewLog(conftest.MockConfFile)
 	assert.NotNil(t, log)
 	assert.Equal(t, logrus.InfoLevel, log.Logger.Level)
 }
@@ -36,9 +37,9 @@ func DotEnvLogTest(t *testing.T) {
 	expected := "*logrus.JSONFormatter"
 	// !!WARN!! `` injects \tabs
 	cfg := "LOG_LEVEL=WARN\nLOG_FORMAT=JSON"
-	err := os.WriteFile(mockConfFile, []byte(cfg), mockConfFilePerms)
+	err := os.WriteFile(conftest.MockConfFile, []byte(cfg), conftest.MockConfFilePerms)
 	assert.Nil(t, err)
-	log := NewLog(mockConfFile)
+	log := NewLog(conftest.MockConfFile)
 	assert.NotNil(t, log)
 	assert.Equal(t, logrus.WarnLevel, log.Logger.Level)
 	assert.Equal(t, expected, fmt.Sprintf("%T", log.Logger.Formatter))

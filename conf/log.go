@@ -22,6 +22,7 @@ const (
 func NewLog(confName string) *logrus.Entry {
 	var conf *koanf.Koanf
 	var err error
+	confName = defaultConfName(confName)
 	if conf, err = NewConf(confName); err != nil {
 		conf = koanf.New(PropDelimiter)
 	}

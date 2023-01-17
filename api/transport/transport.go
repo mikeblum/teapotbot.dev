@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"teapotbot.dev/conf"
 )
 
 const (
@@ -24,8 +25,8 @@ type Transport struct {
 	log  *logrus.Entry
 }
 
-func NewTransport() *Transport {
-	log := logrus.New().WithFields(logrus.Fields{})
+func NewTransport(confName string) *Transport {
+	log := conf.NewLog(confName)
 	log.Logger.SetLevel(logrus.DebugLevel)
 	t := &Transport{
 		log: log,
