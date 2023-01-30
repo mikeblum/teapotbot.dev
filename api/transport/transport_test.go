@@ -14,7 +14,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	buf "github.com/mikeblum/teapotbot.dev/api/internal/ping"
+	buf "github.com/mikeblum/teapotbot.dev/api/internal/crawl"
 	"github.com/mikeblum/teapotbot.dev/conftest"
 )
 
@@ -24,7 +24,7 @@ const (
 	tcpNetwork        = "tcp"
 	ipv4Addr          = "127.0.0.1:0"
 	ipv6Addr          = "[::]:0"
-	routePing         = "/ping"
+	routeCrawl        = "/crawl"
 	responsePong      = "PONG"
 	jitterMaxMs       = 500
 	protocolV4        = "ipv4"
@@ -57,23 +57,23 @@ func createTestURL(listener net.Listener) *url.URL {
 	return &url.URL{
 		Scheme: buf.Scheme_HTTP.String(),
 		Host:   listener.Addr().String(),
-		Path:   routePing,
+		Path:   routeCrawl,
 	}
 }
 
-func ping(rw http.ResponseWriter, r *http.Request) {
+func Crawl(rw http.ResponseWriter, r *http.Request) {
 	maxMs := big.NewInt(jitterMaxMs)
 	if jitter, err := rand.Int(rand.Reader, maxMs); err != nil {
 		panic("failed to read crypto/rand")
 	} else {
 		jitter := time.Duration(jitter.Int64()) * time.Millisecond
-		log.Printf("jittering ping by %dms", jitter.Milliseconds())
+		log.Printf("jittering Crawl by %dms", jitter.Milliseconds())
 		time.Sleep(jitter)
 	}
 	rw.WriteHeader(http.StatusOK)
 	rw.Header().Set(headerContentType, contentTypeText)
 	if _, err := rw.Write([]byte(responsePong)); err != nil {
-		panic(fmt.Sprintf("failed to resolve /ping: %v", err))
+		panic(fmt.Sprintf("failed to resolve /crawl: %v", err))
 	}
 
 }
@@ -100,7 +100,7 @@ func setupSuite(t *testing.T) (*TCPTestSuite, func(t *testing.T, suite *TCPTestS
 	ipv6, _ := createTCPListener(t, tcpNetwork, ipv6Addr)
 	suite.ipv6 = ipv6
 
-	http.HandleFunc(routePing, ping)
+	http.HandleFunc(routeCrawl, Crawl)
 
 	go suite.serve(protocolV4, suite.ipv4)
 	go suite.serve(protocolV6, suite.ipv6)
@@ -125,8 +125,8 @@ func TestTransport(t *testing.T) {
 	suite, teardown := setupSuite(t)
 	defer teardown(t, suite)
 	t.Run("transport=do", TransportDoTest)
-	t.Run("IPV=4", suite.PingIpv4Test)
-	t.Run("IPV=6", suite.PingIpv6Test)
+	t.Run("IPV=4", suite.CrawlIpv4Test)
+	t.Run("IPV=6", suite.CrawlIpv6Test)
 }
 
 func TransportDoTest(t *testing.T) {
@@ -135,7 +135,7 @@ func TransportDoTest(t *testing.T) {
 	assert.NotNil(t, ctx)
 }
 
-func (s *TCPTestSuite) PingIpv4Test(t *testing.T) {
+func (s *TCPTestSuite) CrawlIpv4Test(t *testing.T) {
 	resp, err := s.client.Get(createTestURL(s.ipv4).String())
 	assert.Nil(t, err)
 	defer resp.Body.Close()
@@ -145,7 +145,7 @@ func (s *TCPTestSuite) PingIpv4Test(t *testing.T) {
 	assert.Equal(t, responsePong, string(body))
 }
 
-func (s *TCPTestSuite) PingIpv6Test(t *testing.T) {
+func (s *TCPTestSuite) CrawlIpv6Test(t *testing.T) {
 	resp, err := s.client.Get(createTestURL(s.ipv6).String())
 	assert.Nil(t, err)
 	defer resp.Body.Close()
