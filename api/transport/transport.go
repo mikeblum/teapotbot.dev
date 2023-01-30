@@ -2,7 +2,6 @@ package transport
 
 import (
 	"crypto/tls"
-	"log"
 	"net/http"
 	"net/http/httptrace"
 	"time"
@@ -76,7 +75,7 @@ func (t *Transport) DNSDone(info httptrace.DNSDoneInfo) {
 	t.log.WithFields(logrus.Fields{
 		"host":  t.host,
 		"addrs": info.Addrs,
-	}).Debugf("DNS lookup done: %v", info.Err)
+	}).WithError(info.Err).Debug("DNS lookup done")
 }
 
 // ConnectStart is called when a new connection's Dial begins.
@@ -98,7 +97,7 @@ func (t *Transport) ConnectDone(network, addr string, err error) {
 	t.log.WithFields(logrus.Fields{
 		"network": network,
 		"addr":    addr,
-	}).Debugf("connection done: %v", err)
+	}).WithError(err).Debug("connection done")
 }
 
 // TLSHandshakeStart is called when the TLS handshake is started. When
@@ -118,7 +117,7 @@ func (t *Transport) TLSHandshakeDone(state tls.ConnectionState, err error) {
 		"protocol":     state.NegotiatedProtocol,
 		"tls_version":  state.Version,
 		"cipher_suite": state.CipherSuite,
-	}).Debugf("tls handshake done: %v", err)
+	}).WithError(err).Debug("tls handshake done")
 }
 
 // GetConn is called before a connection is created or
@@ -151,7 +150,7 @@ func (t *Transport) Do() *Transport {
 
 	client := t.Client()
 	if res, err := client.Do(req); err != nil {
-		log.Printf("failed to crawl request: %v", err)
+		t.log.WithError(err).Error("failed to crawl request")
 	} else {
 		defer res.Body.Close()
 	}

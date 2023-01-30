@@ -22,13 +22,13 @@ func TestLog(t *testing.T) {
 }
 
 func LogStdoutTest(t *testing.T) {
-	log := NewLog(conftest.MockConfFile)
+	log := NewLog(conftest.TestConfFile)
 	assert.NotNil(t, log)
 	assert.Equal(t, os.Stdout, log.Logger.Out)
 }
 
 func LogLevelInfoTest(t *testing.T) {
-	log := NewLog(conftest.MockConfFile)
+	log := NewLog(conftest.TestConfFile)
 	assert.NotNil(t, log)
 	assert.Equal(t, logrus.InfoLevel, log.Logger.Level)
 }
@@ -38,9 +38,9 @@ func DotEnvLogTest(t *testing.T) {
 	expected := "*logrus.JSONFormatter"
 	// !!WARN!! `` injects \tabs
 	cfg := "LOG_LEVEL=WARN\nLOG_FORMAT=JSON"
-	err := os.WriteFile(conftest.MockConfFile, []byte(cfg), conftest.MockConfFilePerms)
+	err := os.WriteFile(conftest.TestConfFile, []byte(cfg), conftest.TestConfFilePerms)
 	assert.Nil(t, err)
-	log := NewLog(conftest.MockConfFile)
+	log := NewLog(conftest.TestConfFile)
 	assert.NotNil(t, log)
 	assert.Equal(t, logrus.WarnLevel, log.Logger.Level)
 	assert.Equal(t, expected, fmt.Sprintf("%T", log.Logger.Formatter))

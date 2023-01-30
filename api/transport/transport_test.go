@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"fmt"
 	"io"
-	"log"
 	"math/big"
 	"net"
 	"net/http"
@@ -12,9 +11,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
 	buf "github.com/mikeblum/teapotbot.dev/api/internal/crawl"
+	"github.com/mikeblum/teapotbot.dev/conf"
 	"github.com/mikeblum/teapotbot.dev/conftest"
 )
 
@@ -33,6 +34,7 @@ const (
 
 type TCPTestSuite struct {
 	client *http.Client
+	log    *logrus.Entry
 	srv    *http.Server
 	ipv4   net.Listener
 	ipv6   net.Listener
@@ -40,9 +42,25 @@ type TCPTestSuite struct {
 
 func (s *TCPTestSuite) serve(protocol string, listener net.Listener) {
 	if err := s.srv.Serve(listener); err != nil {
-		log.Printf("[%s] serve: %v", protocol, err)
+		s.log.WithError(err).Errorf("[%s] serve", protocol)
 	}
-	log.Printf("[%s] listening @ %s", protocol, listener.Addr().String())
+	s.log.Infof("[%s] listening @ %s", protocol, listener.Addr().String())
+}
+
+func (s *TCPTestSuite) Crawl(rw http.ResponseWriter, r *http.Request) {
+	maxMs := big.NewInt(jitterMaxMs)
+	if jitter, err := rand.Int(rand.Reader, maxMs); err != nil {
+		panic("failed to read crypto/rand")
+	} else {
+		jitter := time.Duration(jitter.Int64()) * time.Millisecond
+		s.log.Infof("jittering crawl by %dms", jitter.Milliseconds())
+		time.Sleep(jitter)
+	}
+	rw.WriteHeader(http.StatusOK)
+	rw.Header().Set(headerContentType, contentTypeText)
+	if _, err := rw.Write([]byte(responsePong)); err != nil {
+		panic(fmt.Sprintf("failed to resolve /crawl: %v", err))
+	}
 }
 
 // Utils
@@ -61,31 +79,14 @@ func createTestURL(listener net.Listener) *url.URL {
 	}
 }
 
-func Crawl(rw http.ResponseWriter, r *http.Request) {
-	maxMs := big.NewInt(jitterMaxMs)
-	if jitter, err := rand.Int(rand.Reader, maxMs); err != nil {
-		panic("failed to read crypto/rand")
-	} else {
-		jitter := time.Duration(jitter.Int64()) * time.Millisecond
-		log.Printf("jittering Crawl by %dms", jitter.Milliseconds())
-		time.Sleep(jitter)
-	}
-	rw.WriteHeader(http.StatusOK)
-	rw.Header().Set(headerContentType, contentTypeText)
-	if _, err := rw.Write([]byte(responsePong)); err != nil {
-		panic(fmt.Sprintf("failed to resolve /crawl: %v", err))
-	}
-
-}
-
 // Setup
 
 func setupSuite(t *testing.T) (*TCPTestSuite, func(t *testing.T, suite *TCPTestSuite)) {
 	_, err := conftest.SetupConf()
 	assert.Nil(t, err)
-	log.Print("spinning up tcp test servers")
 	suite := &TCPTestSuite{
-		client: NewTransport(conftest.MockConfFile).Client(),
+		client: NewTransport(conftest.TestConfFile).Client(),
+		log:    conf.NewLog(conftest.TestConfFile),
 	}
 	srv := &http.Server{
 		ReadTimeout:       1 * time.Second,
@@ -100,7 +101,7 @@ func setupSuite(t *testing.T) (*TCPTestSuite, func(t *testing.T, suite *TCPTestS
 	ipv6, _ := createTCPListener(t, tcpNetwork, ipv6Addr)
 	suite.ipv6 = ipv6
 
-	http.HandleFunc(routeCrawl, Crawl)
+	http.HandleFunc(routeCrawl, suite.Crawl)
 
 	go suite.serve(protocolV4, suite.ipv4)
 	go suite.serve(protocolV6, suite.ipv6)
@@ -110,7 +111,6 @@ func setupSuite(t *testing.T) (*TCPTestSuite, func(t *testing.T, suite *TCPTestS
 
 func teardownSuite(t *testing.T, suite *TCPTestSuite) {
 	conftest.CleanupConf(t)
-	log.Print("tearing down tcp test servers")
 	var err error
 	err = suite.ipv4.Close()
 	assert.Nil(t, err, "ipv4 test server closed")
@@ -130,7 +130,7 @@ func TestTransport(t *testing.T) {
 }
 
 func TransportDoTest(t *testing.T) {
-	transport := NewTransport(conftest.MockConfFile)
+	transport := NewTransport(conftest.TestConfFile)
 	ctx := transport.Do()
 	assert.NotNil(t, ctx)
 }
