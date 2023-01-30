@@ -5,9 +5,10 @@ import (
 	"os"
 	"testing"
 
+	"github.com/mikeblum/teapotbot.dev/conftest"
+
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	"teapotbot.dev/conftest"
 )
 
 func TestLog(t *testing.T) {

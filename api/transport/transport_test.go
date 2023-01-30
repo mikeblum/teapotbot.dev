@@ -14,8 +14,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	buf "teapotbot.dev/api/internal/ping"
-	"teapotbot.dev/conftest"
+	buf "github.com/mikeblum/teapotbot.dev/api/internal/ping"
+	"github.com/mikeblum/teapotbot.dev/conftest"
 )
 
 const (

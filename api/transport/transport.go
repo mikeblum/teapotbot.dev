@@ -7,8 +7,9 @@ import (
 	"net/http/httptrace"
 	"time"
 
+	"github.com/mikeblum/teapotbot.dev/conf"
+
 	"github.com/sirupsen/logrus"
-	"teapotbot.dev/conf"
 )
 
 const (

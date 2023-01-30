@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"testing"
 
+	buf "github.com/mikeblum/teapotbot.dev/api/internal/ping"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/durationpb"
-	buf "teapotbot.dev/api/internal/ping"
 )
 
 type mockedPingRequest struct {

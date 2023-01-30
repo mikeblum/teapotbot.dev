@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/mikeblum/teapotbot.dev/conftest"
 	"github.com/stretchr/testify/assert"
-	"teapotbot.dev/conftest"
 )
 
 type ConfTestSuite struct {
