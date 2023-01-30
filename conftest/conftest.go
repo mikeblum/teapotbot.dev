@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	MockConfFile      = "mock.env"
+	MockConfFile      = ".test.env"
 	MockConfFilePerms = 0600
 )
 

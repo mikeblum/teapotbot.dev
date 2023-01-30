@@ -20,13 +20,16 @@ const (
 
 // NewLog - configure logging
 func NewLog(confName string) *logrus.Entry {
-	var conf *koanf.Koanf
+	var cfg *koanf.Koanf
 	var err error
-	confName = defaultConfName(confName)
-	if conf, err = NewConf(confName); err != nil {
-		conf = koanf.New(PropDelimiter)
+	var cfgLogLevel string
+	if cfg, err = NewConf(Provider(confName)); err != nil {
+		// default to INFO
+		cfgLogLevel = logrus.InfoLevel.String()
+	} else {
+		cfgLogLevel = cfg.String(envLogLevel)
 	}
-	logFormat := GetEnv(envLogFormat, conf.String(envLogFormat))
+	logFormat := GetEnv(envLogFormat, cfg.String(envLogFormat))
 	if strings.EqualFold(logFormat, jsonLog) {
 		logrus.SetFormatter(&logrus.JSONFormatter{
 			DisableHTMLEscape: true,
@@ -40,7 +43,8 @@ func NewLog(confName string) *logrus.Entry {
 	}
 	logrus.SetOutput(os.Stdout)
 	var logLevel logrus.Level
-	if logLevel, err = logrus.ParseLevel(GetEnv(envLogLevel, conf.String(envLogLevel))); err != nil {
+	logLevel, err = logrus.ParseLevel(GetEnv(envLogLevel, cfgLogLevel))
+	if err != nil {
 		logLevel = logrus.InfoLevel
 	}
 	logrus.SetLevel(logLevel)

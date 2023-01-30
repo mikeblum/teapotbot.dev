@@ -1,7 +1,6 @@
 package conf
 
 import (
-	"log"
 	"os"
 	"strings"
 
@@ -12,26 +11,30 @@ import (
 )
 
 const (
-	EnvConfigPath   = "CONFIG_PATH"
-	EnvVarNamespace = "TEAPOT_"
+	EnvConfigPath   = "CONF_PATH"
+	EnvVarNamespace = ""
 	EnvDelimiter    = "_"
 	PropDelimiter   = "."
 	ConfFile        = ".env"
 	cwd             = "."
 )
 
+type Conf struct{}
+
 // NewConf instantiates a new dotenv config with environment variables for context
 // !!Note!! environment variables must be configured BEFORE calling NewConf
-func NewConf(confName string) (*koanf.Koanf, error) {
-	confName = defaultConfName(confName)
+func NewConf(provider koanf.Provider) (*koanf.Koanf, error) {
 	koan := koanf.New(cwd)
-	if err := koan.Load(file.Provider(confName), dotenv.Parser()); err != nil {
-		log.Printf("error loading config: %s/%s: %v", cwd, confName, err)
-		return koan, err
+	if err := koan.Load(provider, dotenv.Parser()); err != nil {
+		return nil, err
 	}
 	// load env variables under EnvVarNamespace namespace`
 	err := koan.Load(env.Provider(EnvVarNamespace, EnvDelimiter, processEnvVar), nil)
 	return koan, err
+}
+
+func Provider(confName string) *file.File {
+	return file.Provider(defaultConfName(confName))
 }
 
 func defaultConfName(confName string) string {

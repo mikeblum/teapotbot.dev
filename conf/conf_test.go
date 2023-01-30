@@ -2,7 +2,6 @@ package conf
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"testing"
@@ -33,6 +32,8 @@ func TestConf(t *testing.T) {
 	// <teardown code>
 	defer teardown(t, suite.conf)
 	t.Run("conf=new", NewConfTest)
+	t.Run("conf=err", NewConfErrTest)
+	t.Run("conf=default", DefaultConfNameTest)
 	t.Run("conf=dotenv", DotEnvConfTest)
 	t.Run("conf=env-namespace", EnvConfTest)
 	t.Run("conf=env-var", GetEnvVarTest)
@@ -40,9 +41,19 @@ func TestConf(t *testing.T) {
 }
 
 func NewConfTest(t *testing.T) {
-	conf, err := NewConf(conftest.MockConfFile)
+	conf, err := NewConf(Provider(conftest.MockConfFile))
 	assert.Nil(t, err)
 	assert.NotNil(t, conf)
+}
+
+func NewConfErrTest(t *testing.T) {
+	conf, err := NewConf(nil)
+	assert.NotNil(t, err)
+	assert.Nil(t, conf)
+}
+
+func DefaultConfNameTest(t *testing.T) {
+	assert.Equal(t, ConfFile, defaultConfName(""))
 }
 
 // NOTE: conf file must be populated before calling `NewConf`
@@ -53,13 +64,8 @@ func DotEnvConfTest(t *testing.T) {
 	cfg := fmt.Sprintf("%s=%s", expectedKey, expectedValue)
 	err := os.WriteFile(conftest.MockConfFile, []byte(cfg), conftest.MockConfFilePerms)
 	assert.Nil(t, err)
-	conf, err := NewConf(conftest.MockConfFile)
+	conf, err := NewConf(Provider(conftest.MockConfFile))
 	assert.Nil(t, err)
-	for k, v := range conf.All() {
-		key := k
-		value := v
-		log.Printf("%s -> %s\n", key, value)
-	}
 	assert.Equal(t, expectedValue, conf.Get(expectedKey).(string))
 }
 
@@ -70,7 +76,7 @@ func EnvConfTest(t *testing.T) {
 	expectedValue := "test_env_value"
 	os.Setenv(envVar, expectedValue)
 	defer os.Unsetenv(envVar)
-	conf, err := NewConf(conftest.MockConfFile)
+	conf, err := NewConf(Provider(conftest.MockConfFile))
 	assert.Nil(t, err)
 	assert.Equal(t, expectedValue, conf.Get(expectedKey).(string))
 }
