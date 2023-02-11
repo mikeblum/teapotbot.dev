@@ -16,6 +16,10 @@ help:
 	echo
 	echo "Targets run by default are: `sed -n 's/^all: //p' ./Makefile | sed -e 's/ /, /g' | sed -e 's/\(.*\), /\1, and /'`"
 
+## docker: spin up local dev stack via docker-compose
+docker:
+	docker-compose -f dockerfiles/docker-compose.yml up -d --remove-orphans
+
 ## lint: Lint with golangci-lint
 lint:
 	docker run --rm -v $$(pwd):/repo -w /repo golangci/golangci-lint:${GOLANGCI_LINT_VERSION} golangci-lint run --verbose --color always ./...
@@ -50,4 +54,4 @@ test: proto
 test-perf:
 	go test -test.v -benchmem -bench=. -coverprofile=coverage-bench.out ./... && go tool cover -html=coverage-bench.out && rm coverage-bench.out
 
-.PHONY: lint fmt tidy pre-commit proto test test-perf
+.PHONY: docker lint fmt tidy pre-commit proto test test-perf

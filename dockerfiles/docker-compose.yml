@@ -7,27 +7,83 @@ networks:
 services:
   timescaledb:
     container_name: timescaledb
-    # doesn't include promscale
-    # image: timescale/timescaledb:latest-pg14
-    image: timescale/timescaledb-ha:pg14-latest
+    image: timescale/timescaledb:latest-pg14
     restart: on-failure
     ports:
-      - 5432:5432/tcp
+      - 9876:5432/tcp
     volumes:
       - timescaledb-data:/var/lib/postgresql/data
     environment:
       POSTGRES_PASSWORD: localhost
       POSTGRES_USER: postgres
-      TSTUNE_PROFILE: promscale
+
+  loki:
+    container_name: loki
+    image: grafana/loki:2.7.0
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - grafana
+
+  tempo:
+    container_name: tempo
+    image: grafana/tempo:2.0.0
+    command: [ "-config.file=/etc/tempo.yaml" ]
+    volumes:
+      - ../shared/tempo.yaml:/etc/tempo.yaml
+      - grafana-data:/tmp/tempo
+    ports:
+      - "14268" # jaeger ingest
+      - "3200"  # tempo
+      - "4317"  # otlp grpc
+      - "4318"  # otlp http
+      - "9411"  # zipkin
+    networks:
+      - grafana
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:latest
+    command:
+      - --config.file=/etc/prometheus.yaml
+      - --web.enable-remote-write-receiver
+      - --enable-feature=exemplar-storage
+    volumes:
+      - ../shared/prometheus.yaml:/etc/prometheus.yaml
+    ports:
+      - "9090:9090"
 
   grafana:
     container_name: grafana
     image: grafana/grafana:9.3.2
     restart: on-failure
     environment:
-      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
       - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
       - GF_AUTH_BASIC_ENABLED=false
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+      - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+    entrypoint:
+      - sh
+      - -euc
+      - |
+        mkdir -p /etc/grafana/provisioning/datasources
+        cat <<EOF > /etc/grafana/provisioning/datasources/ds.yaml
+        apiVersion: 1
+        datasources:
+        - name: Loki
+          type: loki
+          access: proxy
+          orgId: 1
+          url: http://loki:3100
+          basicAuth: false
+          isDefault: true
+          version: 1
+          editable: false
+        EOF
+        /run.sh
     networks:
       - grafana
       - timescaledb
