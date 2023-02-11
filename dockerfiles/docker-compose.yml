@@ -20,33 +20,6 @@ services:
       POSTGRES_USER: postgres
       TSTUNE_PROFILE: promscale
 
-  promscale:
-    container_name: promscale
-    image: timescale/promscale:latest
-    restart: on-failure
-    ports:
-      - 9201:9201/tcp
-      - 9202:9202/tcp
-    depends_on:
-      - timescaledb
-    environment:
-      PROMSCALE_DB_URI: postgres://postgres:localhost@timescaledb:5432/postgres?sslmode=allow
-
-  jaeger:
-    container_name: jaeger
-    image: jaegertracing/all-in-one:1.40.0
-    restart: on-failure
-    environment:
-      SPAN_STORAGE_TYPE: grpc-plugin
-      METRICS_STORAGE_TYPE: prometheus
-      GRPC_STORAGE_SERVER: promscale:9202
-      PROMETHEUS_SERVER_URL: "http://promscale:9201"
-    depends_on:
-    - timescaledb
-    - promscale
-    ports:
-      - "16686:16686"
-
   grafana:
     container_name: grafana
     image: grafana/grafana:9.3.2
@@ -60,7 +33,6 @@ services:
       - timescaledb
     depends_on:
       - timescaledb
-      - jaeger
     ports:
       # WSL2 binds port :3000
       - "3001:3000/tcp"
