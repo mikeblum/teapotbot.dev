@@ -1,0 +1,5 @@
+-- +goose Up
+CREATE SCHEMA IF NOT EXISTS test;
+
+-- +goose Down
+DROP SCHEMA IF EXISTS test CASCADE;

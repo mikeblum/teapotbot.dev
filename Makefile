@@ -5,6 +5,7 @@ MAKEFLAGS += --silent
 BUILD_NAME = teapotbot
 GOLANGCI_LINT_VERSION = v1.50.1
 
+
 all: help
 
 ## help: Prints a list of available build targets.
@@ -57,11 +58,11 @@ test-perf:
 
 ## build: build teapotbot
 build:
-	go build -o ${BUILD_NAME} main.go
+	go build -o ${BUILD_NAME} cmd/main.go
 
 ## run: go run main.go
 run:
-	go run main.go
+	go run cmd/main.go
 
 ## clean: cleanup build artifacts
 clean:

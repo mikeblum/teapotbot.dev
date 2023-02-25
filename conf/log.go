@@ -23,13 +23,14 @@ func NewLog(confName string) *logrus.Entry {
 	var cfg *koanf.Koanf
 	var err error
 	var cfgLogLevel string
+	var logFormat string
 	if cfg, err = NewConf(Provider(confName)); err != nil {
 		// default to INFO
 		cfgLogLevel = logrus.InfoLevel.String()
 	} else {
 		cfgLogLevel = cfg.String(envLogLevel)
+		logFormat = GetEnv(envLogFormat, cfg.String(envLogFormat))
 	}
-	logFormat := GetEnv(envLogFormat, cfg.String(envLogFormat))
 	if strings.EqualFold(logFormat, jsonLog) {
 		logrus.SetFormatter(&logrus.JSONFormatter{
 			DisableHTMLEscape: true,

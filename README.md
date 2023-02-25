@@ -49,3 +49,9 @@ Exit code will be non-zero if the build fails.
 go get google.golang.org/protobuf
 go mod tidy
 ```
+
+## Bootstrap Database
+
+1\. Create `teapotbot` database as the `postgres` user:
+
+`CREATE DATABASE teapotbot ENCODING 'UTF8';`

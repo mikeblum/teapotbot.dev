@@ -25,3 +25,9 @@ config.env
 
 # teapotbot builds
 teapotbot
+
+# docker
+shared
+
+# dotenv files
+.env
