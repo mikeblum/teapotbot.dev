@@ -2,6 +2,7 @@
 
 MAKEFLAGS += --silent
 
+BUILD_NAME = teapotbot
 GOLANGCI_LINT_VERSION = v1.50.1
 
 all: help
@@ -54,4 +55,16 @@ test: proto
 test-perf:
 	go test -test.v -benchmem -bench=. -coverprofile=coverage-bench.out ./... && go tool cover -html=coverage-bench.out && rm coverage-bench.out
 
-.PHONY: docker lint fmt tidy pre-commit proto test test-perf
+## build: build teapotbot
+build:
+	go build -o ${BUILD_NAME} main.go
+
+## run: go run main.go
+run:
+	go run main.go
+
+## clean: cleanup build artifacts
+clean:
+	rm -f ${BUILD_NAME}
+
+.PHONY: docker lint fmt tidy pre-commit proto test test-perf build run clean

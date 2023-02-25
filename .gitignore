@@ -22,3 +22,6 @@ go.work
 
 # conf
 config.env
+
+# teapotbot builds
+teapotbot
